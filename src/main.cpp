@@ -1,130 +1,103 @@
-/*******************************************************************************************
-*
-*   LayoutName v1.0.0 - Tool Description
-*
-*   LICENSE: Propietary License
-*
-*   Copyright (c) 2022 raylib technologies. All Rights Reserved.
-*
-*   Unauthorized copying of this file, via any medium is strictly prohibited
-*   This project is proprietary and confidential unless the owner allows
-*   usage in any other form by expresely written permission.
-*
-**********************************************************************************************/
-
 #include <raylib.h>
-
 #define RAYGUI_IMPLEMENTATION
 #include <raygui.h>
-
-#include <imgui.h>
 #include <rlImGui.h>
 
-//----------------------------------------------------------------------------------
-// Controls Functions Declaration
-//----------------------------------------------------------------------------------
-static void Button001();
+#define DEBUG_MODE
 
-//------------------------------------------------------------------------------------
-// Program main entry point
-//------------------------------------------------------------------------------------
+#ifdef DEBUG_MODE
+#include <imgui.h>
+#include <imgui_stdlib.h>
+#endif
+
+#include <string>
+
+struct Player
+{
+    Vector2 velocity { 0 };
+    Rectangle shape { 100, 100, 40, 60 };
+    std::string name { "Player" };
+
+    Vector2 GetCenter() const {
+        return { shape.x + shape.width / 2, shape.y + shape.height / 2 };
+    }
+
+#ifdef DEBUG_MODE
+    void DebugImGui()
+    {
+        ImGui::Begin("Player Debug");
+
+        ImGui::InputFloat2("Velocity", &velocity.x);
+        ImGui::InputFloat2("Position", &shape.x);
+        ImGui::Text("Center: (%.2f, %.2f)", GetCenter().x, GetCenter().y);
+
+        ImGui::InputText("Name", &name);
+
+        ImGui::End();
+    }
+#endif
+};
+
+void DrawPlayer(const Player& player)
+{
+    DrawRectangleRec(player.shape, RED);
+
+    const int FONT_SIZE = 10;
+    const int TEXT_UP_OFFSET = 12;
+
+    int nameSize = MeasureText(player.name.c_str(), FONT_SIZE);
+
+    Vector2 namePosition {
+        player.GetCenter().x - nameSize / 2,
+        player.shape.y - TEXT_UP_OFFSET
+    };
+
+    DrawText(player.name.c_str(), namePosition.x, namePosition.y, FONT_SIZE, BLACK);
+}
+
+void UpdatePlayer(Player& player)
+{
+    player.shape.x += player.velocity.x;
+    player.shape.y += player.velocity.y;
+}
+
 int main()
 {
-    // Initialization
-    //---------------------------------------------------------------------------------------
     int screenWidth = 800;
     int screenHeight = 450;
 
     SetConfigFlags(FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT | FLAG_WINDOW_RESIZABLE);
-    InitWindow(screenWidth, screenHeight, "layout_name");
+    InitWindow(screenWidth, screenHeight, "wall-it");
     rlImGuiSetup(true);
 
-    // layout_name: controls initialization
-    //----------------------------------------------------------------------------------
-    const char *WindowBox000Text = "SAMPLE TEXT";
-    const char *Button001Text = "SAMPLE TEXT";
-    const char *Slider004Text = "";
-    const char *Spinner003Text = "";
-    
-    Vector2 anchor01 = { 40, 40 };
-    Vector2 anchor02 = { 48, 72 };
-    
-    bool WindowBox000Active = true;
-    bool TextBox002EditMode = false;
-    char TextBox002Text[128] = "SAMPLE TEXT";
-    bool Spinner003EditMode = false;
-    int Spinner003Value = 0;
-    float Slider004Value = 0.0f;
+    SetTargetFPS(144);
 
-    Rectangle layoutRecs[5] = {
-        { anchor02.x + 8, anchor02.y + 16, 160, 176 },
-        { anchor02.x + 24, anchor02.y + 48, 120, 24 },
-        { anchor02.x + 24, anchor02.y + 80, 120, 24 },
-        { anchor02.x + 24, anchor02.y + 112, 120, 24 },
-        { anchor02.x + 24, anchor02.y + 152, 120, 16 },
-    };
-    //----------------------------------------------------------------------------------
+    Player player;
 
-    SetTargetFPS(60);
-    //--------------------------------------------------------------------------------------
-
-    // Main game loop
-    while (!WindowShouldClose())    // Detect window close button or ESC key
+    while (!WindowShouldClose())
     {
-        // Update
-        //----------------------------------------------------------------------------------
-        // TODO: Implement required update logic
-        //----------------------------------------------------------------------------------
+       UpdatePlayer(player);
 
-        // Draw
-        //----------------------------------------------------------------------------------
         BeginDrawing();
 
             ClearBackground(GetColor(GuiGetStyle(DEFAULT, BACKGROUND_COLOR))); 
 
-            // raygui: controls drawing
-            //----------------------------------------------------------------------------------
-            if (WindowBox000Active)
-            {
-                WindowBox000Active = !GuiWindowBox(layoutRecs[0], WindowBox000Text);
-                if (GuiButton(layoutRecs[1], Button001Text)) Button001(); 
-                if (GuiTextBox(layoutRecs[2], TextBox002Text, 128, TextBox002EditMode)) TextBox002EditMode = !TextBox002EditMode;
-                if (GuiSpinner(layoutRecs[3], Spinner003Text, &Spinner003Value, 0, 100, Spinner003EditMode)) Spinner003EditMode = !Spinner003EditMode;
-                GuiSlider(layoutRecs[4], Slider004Text, NULL, &Slider004Value, 0, 100);
-            }
-            //----------------------------------------------------------------------------------
+            DrawPlayer(player);
 
-            // imgui: render
-            //----------------------------------------------------------------------------------
-            // start ImGui Conent
+#ifdef DEBUG_MODE
             rlImGuiBegin();
-
-            // show ImGui Content
-            bool open = true;
-            ImGui::ShowDemoWindow(&open);
-
-            // end ImGui Content
+                player.DebugImGui();
             rlImGuiEnd();
-            //----------------------------------------------------------------------------------
+#endif
 
         EndDrawing();
-        //----------------------------------------------------------------------------------
     }
 
-    // De-Initialization
-    //--------------------------------------------------------------------------------------
+#ifdef DEBUG_MODE
     rlImGuiShutdown();
-    CloseWindow();        // Close window and OpenGL context
-    //--------------------------------------------------------------------------------------
+#endif
+    CloseWindow();
 
     return 0;
-}
-
-//------------------------------------------------------------------------------------
-// Controls Functions Definitions (local)
-//------------------------------------------------------------------------------------
-static void Button001()
-{
-    // TODO: Implement control logic
 }
 
